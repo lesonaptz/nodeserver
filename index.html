@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+    
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+        //var socket = io();
+        var username;
+        var room;
+        var socket = io.connect("http://localhost:3000");
+       
+       socket.on('update', function(msg){
+           $('.textmsg').append(msg+'<br>');
+       });
+       socket.on('updatemsg', function(data){
+           $('.textmsg').append(data.name+' say :'+data.msg);
+       });
+       socket.on('updateroom', function(data){
+            var li = '';
+            jQuery.each( data, function( i, val ) {
+              $( "#" + val ).text( "Mine is " + val + "." );
+                li= li+'<li onclick =joinroom("'+val+'")>'+val+'</li>';
+            });
+           $('.listroom').html(li);
+       });
+       
+      
+      function send() {
+        socket.emit('sendmsg', {name: $('.name').val(), msg: $('.msg').val(), room: room} );
+      }
+      function join() {
+        $('.step1').hide();$('.step2').show();
+        username = $('.name').val();
+        socket.emit("loadroom"); 
+      }
+      function joinroom(roomname) {
+        room = roomname;
+        socket.emit("join", {name: username, room: roomname});
+      }
+      function createRoom() {
+        var room = $('.room').val();
+        socket.emit('creatRoom', room);
+      }
+      
+    </script>
+
+  </head>
+  <body>
+        <div class="step1">
+            name:<input type="text" class="name" />
+           <button onclick="join()">Join</button>
+       </div>
+       <div class="step2" style="display: none;">
+          <div style="width: 200px; float: left; border: 1px solid #eee; height: 300px; overflow: scroll;">
+            <h4>Room list</h4>
+            <ul class="listroom"></ul>
+          </div>
+          <div style="width: 200px; float: left;">
+            <div class="textmsg" style="height: 200px; border: 1px solid #eee; width: 202px; overflow: auto;"></div>
+            <input class="msg" autocomplete="off" />
+            <button class="las" onclick="send();">Send</button>
+          </div>
+          <div style="width: 100px; float: left;">
+            <input type="text" class="room" />
+            <button onclick="createRoom()" >Creat room</button>
+          </div>
+          <div style="clear: both;"></div>
+       </div>
+  </body>
+</html>
